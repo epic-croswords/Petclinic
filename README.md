@@ -227,5 +227,30 @@ The [issue tracker](/issues) is the preferred channel for bug reports, features 
 For pull requests, editor preferences are available in the [editor config](.editorconfig) for easy use in common text editors. Read more and download plugins at <http://editorconfig.org>.
 
 
+JENKINSFILE
 
+pipeline {
+    agent any
+    
+    tools {
+        jdk 'jdk11'
+        maven 'maven3'
+    }
+    stages {
+        stage('git checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/epic-croswords/Petclinic.git'
+            }
+        }
+    stage('sonar-analysis') {
+        steps {
+            sh "mvn clean package"
+            sh ''' mvn sonar:sonar -Dsonar.url=http://192.168.0.104:9000 -Dsonar.login=squ_dbea75cae444460d3c496062c7cddb8e848050fa -Dsonar.projectName=test-sonar \
+                -Dsonar.java.binaries=. \
+                -Dsonar.projectKey=test-sonar '''
+                
+            }
+        }
+}
+}
 
