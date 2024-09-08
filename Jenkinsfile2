@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    
+    tools{
+        maven 'maven'
+        
+    }
+    
+    environment {
+        registry = "900866925774.dkr.ecr.us-east-1.amazonaws.com/app"
+    }
+    
+    stages {
+        stage('git checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/epic-croswords/Petclinic.git'
+            }
+        }
+        stage("Build"){
+            steps{
+            sh "mvn clean install"
+            }
+        }
+          stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build registry 
+          dockerImage.tag("$BUILD_NUMBER")
+        }
+      }
+    }
+   
+    // Uploading Docker images into AWS ECR
+    stage('Pushing to docker') {
+     steps{  
+         script {
+             withDockerRegistry(credentialsId: 'docker-cred') {
+                sh 'docker login'
+                sh 'docker build -t app:$BUILD_NUMBER .'
+                sh 'docker tag app:$BUILD_NUMBER manlineroot12/springboot-app:$BUILD_NUMBER'
+                sh 'docker push manlineroot12/springboot-app:$BUILD_NUMBER'
+         }
+         }
+        }
+      }
+    }
+    }
+
